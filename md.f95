@@ -29,7 +29,7 @@ module MD_STRUCT
         do index=1, size(p_set)
             tmp = p_set(index)
             do dimen=1, 3
-                diff = tmp%v(dimen) * dt + acc(tmp%mass, tmp%f(dimen)) * dt ** 2 / 2
+                diff = tmp%v(dimen) * dt + acc(tmp%mass, tmp%f(dimen)) * dt ** 2 / 2.0
                 p_set(index)%x(dimen) = tmp%x(dimen) + diff
             end do
         end do
@@ -41,14 +41,13 @@ module MD_STRUCT
         type(Particle), dimension(:), intent(inout) :: p_set
         type(Particle) tmp
         integer index, dimen
-        real diff
         real, intent(in) :: dt
 
         do index = 1, size(p_set)
             tmp = p_set(index)
             do dimen = 1, 3
                 p_set(index)%v(dimen) = tmp%v(dimen) + &
-                    (tmp%f(dimen) + tmp%f_next(dimen)) * dt / tmp%mass / 2
+                    acc(tmp%mass, (tmp%f(dimen) + tmp%f_next(dimen))/2.0) * dt
             end do
         end do
     end subroutine velo_verlet_v
@@ -120,9 +119,8 @@ program md
     integer step, index
 
     ! i/o
-    !open(ifile, FILE="")
-    !read(ifile, *) line
-    !close(ifile)
+    integer :: ifile = 1
+    open(ifile, FILE="trajectory.txt")
 
     ! set init pos
     particles(1)%x(1) = -1.0
@@ -134,10 +132,12 @@ program md
     do step = 0, stepmax
         call velo_verlet_x(particles, dt)
         call iterate_pair_f(particles)
-        call bulk_copy_f(particles)
         call velo_verlet_v(particles, dt)
-        write(6, *) step, particles(1)%x, particles(2)%x
+        call bulk_copy_f(particles)
+
+        write(ifile, '(i5, ",", *(1pe0.8, :, ","))') step, particles(1)%x, particles(2)%x
     end do
 
+    close(ifile)
 end program md
 
