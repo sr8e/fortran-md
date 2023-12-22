@@ -41,7 +41,7 @@ module MD_STRUCT
         type(Particle) tmp
         integer index, dimen
         real diff
-        real, intent(in) :: dt 
+        real, intent(in) :: dt
 
         do index=1, size(p_set)
             tmp = p_set(index)
@@ -54,7 +54,7 @@ module MD_STRUCT
             end do
         end do
     end subroutine velo_verlet_x
-                
+
     subroutine velo_verlet_v(p_set, dt)
         ! update velocity
         type(Particle), dimension(:), intent(inout) :: p_set
@@ -81,7 +81,7 @@ module MD_STRUCT
         do i = 1, size(p_set)
             p_set(i)% pe = 0
         end do
-        
+
         ! rc must be less than length of shortest edge
         if (cutoff .ge. minval(box_size)) then
             write(0, *) "simulation box is too small (must be larger than r_c)"
@@ -105,7 +105,7 @@ module MD_STRUCT
                         do u = -1, 1
                             if (.not. is_periodic(3) .and. u .ne. 0) then
                                 cycle
-                            end if 
+                            end if
 
                             call add_force(p_set(i), p_set(j), [s, t, u], cutoff)
                         end do

@@ -27,7 +27,7 @@ module UTILS
     function d_euc(d_vec)
         ! calculate euclid norm of vector
         real, dimension(3) :: d_vec
-        real d_euc 
+        real d_euc
         d_euc = sqrt(dot(d_vec, d_vec))
     end function d_euc
 
@@ -40,7 +40,7 @@ module UTILS
     end function acc
 
     function periodic(p, q)
-        real periodic, p, q 
+        real periodic, p, q
         periodic = mod(p, q)
         if (p .lt. 0) then
             periodic = periodic + q

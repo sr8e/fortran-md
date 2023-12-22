@@ -9,7 +9,7 @@ module IO
         type(Particle), dimension(:), allocatable, intent(out) :: p_set
         real, dimension(3), intent(out) :: box_size
         integer i, n
-        
+
         read(ifile, *) n
 
         ! allocate
@@ -49,7 +49,7 @@ module IO
             p = p_set(i)
             ! regularize position
             do j = 1, 3
-                reg_x(j) = p%x(j) / box_size(j) 
+                reg_x(j) = p%x(j) / box_size(j)
             end do
             write(ifile, '(e0.8)') p%mass
             write(ifile, '(a)') p%elem
