@@ -6,9 +6,13 @@ module MD_STRUCT
 
     type Particle
         real mass ! g/mol
+        character(2) elem
         real, dimension(3) :: x = 0, v = 0, f = 0, f_next = 0
         real :: ke = 0, pe = 0
     end type Particle
+
+    real, dimension(3) :: box_size
+    logical, dimension(3) :: is_periodic ! boundary condition
 
     contains
 
@@ -44,6 +48,9 @@ module MD_STRUCT
             do dimen=1, 3
                 diff = tmp%v(dimen) * dt + acc(tmp%mass, tmp%f(dimen)) * dt ** 2 / 2.0
                 p_set(index)%x(dimen) = tmp%x(dimen) + diff
+                if (is_periodic(dimen)) then
+                    p_set(index)%x(dimen) = periodic(p_set(index)%x(dimen), box_size(dimen))
+                end if
             end do
         end do
     end subroutine velo_verlet_x
@@ -61,35 +68,68 @@ module MD_STRUCT
                 p_set(index)%v(dimen) = tmp%v(dimen) + &
                     acc(tmp%mass, (tmp%f(dimen) + tmp%f_next(dimen))/2.0) * dt
             end do
-            p_set(index)%ke = convert_unit(tmp%mass * d_euc(tmp%v) ** 2 / 2.0, .TRUE.)
+            p_set(index)%ke = convert_unit(tmp%mass * d_euc(tmp%v) ** 2 / 2.0, .true.)
         end do
     end subroutine velo_verlet_v
 
-    subroutine iterate_pair_f(p_set)
+    subroutine iterate_pair_f(p_set, cutoff)
         type(Particle), dimension(:), intent(inout) :: p_set
+        real, intent(in) :: cutoff
         integer i, j
+        integer s, t, u
         ! reset potential energy
         do i = 1, size(p_set)
             p_set(i)% pe = 0
         end do
         
-        do i = 1, size(p_set) - 1
-            do j = i + 1, size(p_set)
-                call add_force(p_set(i), p_set(j))
-                call add_force(p_set(j), p_set(i))
+        ! rc must be less than length of shortest edge
+        if (cutoff .ge. minval(box_size)) then
+            write(0, *) "simulation box is too small (must be larger than r_c)"
+            stop
+        end if
+
+        do i = 1, size(p_set)
+            do j = 1, size(p_set)
+                if (i .eq. j) then
+                    cycle
+                end if
+                ! iterate image cell
+                do s = -1, 1
+                    if (.not. is_periodic(1) .and. s .ne. 0 ) then
+                        cycle
+                    end if
+                    do t = -1, 1
+                        if (.not. is_periodic(2) .and. t .ne. 0) then
+                            cycle
+                        end if
+                        do u = -1, 1
+                            if (.not. is_periodic(3) .and. u .ne. 0) then
+                                cycle
+                            end if 
+
+                            call add_force(p_set(i), p_set(j), [s, t, u], cutoff)
+                        end do
+                    end do
+                end do
             end do
         end do
     end subroutine iterate_pair_f
 
-    subroutine add_force(pi, pj)
+    subroutine add_force(pi, pj, cell_ofs, cutoff)
         ! calculate force of particle j to particle i
         type(Particle), intent(inout) :: pi
         type(Particle), intent(in) :: pj
+        integer, dimension(3), intent(in) :: cell_ofs
+        real, intent(in) :: cutoff
         real, dimension(3) :: distance
         real r
         integer index
-        distance = pj%x - pi%x
+        distance = pj%x + box_size * cell_ofs - pi%x
         r = d_euc(distance)
+        if (r .gt. cutoff) then
+            return
+        end if
+
         pi%pe = pi%pe + p(r) / 2.0
         do index = 1, 3
             pi%f_next(index) = pi%f_next(index) + f(r) * distance(index) / r
