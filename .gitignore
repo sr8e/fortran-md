@@ -1,0 +1,17 @@
+# atom configurations
+*.cfg
+*.atom
+
+# compiled objects
+*.o
+*.mod
+
+# executables
+/md_exec
+/lattice
+
+# output files
+trajectory.txt
+energy.txt
+
+
