@@ -10,6 +10,7 @@ program md
     !params
     real, parameter :: dt = 0.001 !
     integer, parameter :: stepmax = 100
+    integer, parameter :: seed = 1891109
     !potential
     real, parameter :: eps = 0.2703, alpha = 1.1646, r0 = 3.253
     real, parameter :: cutoff = 12.0
@@ -18,7 +19,7 @@ program md
 
     integer step, index
     !total energy
-    real, dimension(2) :: toteng  ! pe, ke
+    real, dimension(3) :: toteng  ! pe, ke, temp
 
     ! i/o
     integer :: itraj = 1, ieng = 2
@@ -32,11 +33,15 @@ program md
     open(ieng, FILE="energy.txt")
 
     !module initialize
+    !random
+    call setup_random(seed)
     !simulation box
     is_periodic = [.true., .true., .true.]
     !potentials
     call set_morse_params(eps, alpha, r0)
 
+    ! set init vel
+    call init_velocity_temp(particles, 300.0)
     ! set init force
     call iterate_pair_f(particles, cutoff)
     call bulk_copy_f(particles)
@@ -48,7 +53,7 @@ program md
         call bulk_copy_f(particles)
 
         toteng = total_energy(particles)
-        write(ieng, '(i5, ",", *(1pe0.8, :, ","))') step, toteng, sum(toteng)
+        write(ieng, '(i5, ",", *(1pe0.8, :, ","))') step, toteng, sum(toteng(1:2))
     end do
 
     close(itraj)

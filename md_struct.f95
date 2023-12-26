@@ -4,6 +4,8 @@ module MD_STRUCT
 
     implicit none
 
+    real, parameter :: kb = 8.617333262e-5 ! eV/K
+
     type Particle
         real mass ! g/mol
         character(2) elem
@@ -137,7 +139,7 @@ module MD_STRUCT
     end subroutine add_force
 
     function total_energy(p_set)
-        real, dimension(2) :: total_energy
+        real, dimension(3) :: total_energy
         type(Particle), dimension(:) :: p_set
         integer i
         total_energy = 0
@@ -145,8 +147,24 @@ module MD_STRUCT
             total_energy(1) = total_energy(1) + p_set(i)%pe
             total_energy(2) = total_energy(2) + p_set(i)%ke
         end do
+        ! temperature
+        total_energy(3) = 2.0 * total_energy(2) / (3.0 * size(p_set) * kb)
     end function total_energy
 
-    !potentials
+    subroutine init_velocity_temp(p_set, temp)
+        type(Particle), dimension(:), intent(inout) :: p_set
+        real, intent(in) :: temp
+        integer i, dimen
+        real kt
+
+        kt = convert_unit(kb * temp, .false.)
+        do i = 1, size(p_set)
+            do dimen = 1, 3
+                p_set(i)%v(dimen) = normdist(0.0, kt / p_set(i)%mass)
+            end do
+        end do
+    end subroutine init_velocity_temp
+
+
 
 end module MD_STRUCT

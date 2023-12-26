@@ -1,7 +1,7 @@
 module UTILS
     implicit none
 
-    real, parameter :: NA = 6.02214076e+23, e = 1.6021892e-19
+    real, parameter :: NA = 6.02214076e+23, e = 1.6021892e-19, pi = 3.1415926536
 
     contains
 
@@ -46,5 +46,31 @@ module UTILS
             periodic = periodic + q
         end if
     end function periodic
+
+    ! random
+    subroutine setup_random(seed)
+        integer, intent(in) :: seed
+        integer n
+        integer, dimension(:), allocatable :: seed_array
+
+        ! get seed array size (compiler dependent)
+        call random_seed(size=n)
+
+        ! allocate seed array and put specified value
+        allocate(seed_array(n))
+        seed_array = seed
+        call random_seed(put=seed_array)
+    end subroutine setup_random
+
+    function normdist(mu, var)
+        implicit none
+        ! generate random number which follows N(mu, var)
+        ! by Box-Muller's method
+        real mu, var
+        real normdist, u1, u2
+        call random_number(u1)
+        call random_number(u2)
+        normdist = sqrt(var) * sqrt(-2.0*log(1-u1))*cos(2*pi*u2) + mu
+    end function
 
 end module UTILS
