@@ -21,6 +21,20 @@ module MD_STRUCT
 
     contains
 
+    subroutine velo_verlet_step(is_init)
+        logical, intent(in) :: is_init
+
+        if (is_init) then
+            call iterate_pair_f()
+            call bulk_copy_f()
+        else
+            call velo_verlet_x()
+            call iterate_pair_f()
+            call velo_verlet_v()
+            call bulk_copy_f()
+        end if
+    end subroutine velo_verlet_step
+
     subroutine bulk_set_mass(mass)
         real, intent(in) :: mass
         integer index
