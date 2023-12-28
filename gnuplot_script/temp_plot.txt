@@ -1,0 +1,3 @@
+reset
+set datafile separator comma
+plot "energy.txt" u 1:4
