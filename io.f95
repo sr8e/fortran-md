@@ -4,10 +4,8 @@ module IO
 
     contains
 
-    subroutine read_atom(ifile, p_set, box_size)
+    subroutine read_atom(ifile)
         integer, intent(in) :: ifile
-        type(Particle), dimension(:), allocatable, intent(out) :: p_set
-        real, dimension(3), intent(out) :: box_size
         integer i, n
 
         read(ifile, *) n
@@ -22,10 +20,8 @@ module IO
         end do
     end subroutine read_atom
 
-    subroutine write_cfg(ifile, p_set, box_size)
+    subroutine write_cfg(ifile)
         integer, intent(in) :: ifile
-        type(Particle), dimension(:), intent(in) :: p_set
-        real, dimension(3), intent(in) :: box_size
         integer i, j
         real len
         type(Particle) p
