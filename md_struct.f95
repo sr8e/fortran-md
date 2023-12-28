@@ -14,6 +14,7 @@ module MD_STRUCT
     end type Particle
 
     real, dimension(3) :: box_size
+    real, dimension(3) :: init_box
     logical, dimension(3) :: is_periodic ! boundary condition
 
     contains
@@ -165,6 +166,39 @@ module MD_STRUCT
         end do
     end subroutine init_velocity_temp
 
+    subroutine relax_quickmin(p_set)
+        type(Particle), dimension(:), intent(inout) :: p_set
+        type(Particle) tmp
+        real, dimension(3) :: f_unit
+        real dp
+        integer i
 
+        do i = 1, size(p_set)
+            ! project velocity on force direction
+            ! remove velocity if opposite to force
+            tmp = p_set(i)
+            f_unit = tmp%f / d_euc(tmp%f)
+            dp = dot(tmp%v, f_unit)
+            if (dp .lt. 0) then
+                p_set(i)%v = 0
+            else
+                p_set(i)%v = dp * f_unit
+            end if
+        end do
+
+    end subroutine relax_quickmin
+
+    subroutine deform(p_set, erate, dstep)
+        ! apply nominal strain to z axis
+        type(Particle), dimension(:), intent(inout) :: p_set
+        real, intent(in) :: erate
+        integer, intent(in) :: dstep
+        integer i
+
+        box_size(3) = init_box(3) * (1 + erate * dstep)
+        do i = 1, size(p_set)
+            p_set(i)%x(3) = p_set(i)%x(3) * (1+erate/(1+erate*(dstep-1)))
+        end do
+    end subroutine deform
 
 end module MD_STRUCT
