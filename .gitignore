@@ -6,11 +6,14 @@
 *.mod
 
 # executables
-/md_exec
+/md_3atom
+/md_bulk_Al
+/md_nanowire
 /lattice
 
 # output files
 trajectory.txt
 energy.txt
+strain.txt
 
 

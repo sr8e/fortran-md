@@ -1,15 +1,19 @@
-SRC=md.f95
-BIN=md_exec
+BIN=md_3atom md_bulk_Al md_nanowire
+BIN_ALONE=lattice
 MOD=utils.o potentials.o md_struct.o io.o
 
-compile: $(MOD)
-	gfortran $^ $(SRC) -o $(BIN)
+all: $(BIN);
 
-lattice: lattice.f95
+$(BIN):%:%.f95 $(MOD)
+	gfortran $^ -o $@
+
+$(BIN_ALONE):%:%.f95
 	gfortran $< -o $@
 
 %.o: %.f95
 	gfortran -c $< -o $@
 
 clean:
-	$(RM) *.o *.mod $(BIN)
+	$(RM) *.o *.mod *.txt $(BIN) $(BIN_ALONE)
+
+.PHONY: null clean
