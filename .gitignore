@@ -1,6 +1,5 @@
 # atom configurations
 *.cfg
-*.atom
 
 # compiled objects
 *.o
