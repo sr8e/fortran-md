@@ -16,11 +16,12 @@ module MD_STRUCT
     real, dimension(3) :: box_size
     real, dimension(3) :: init_box
     logical, dimension(3) :: is_periodic ! boundary condition
+    type(Particle), dimension(:), allocatable :: p_set
+    real dt, cutoff
 
     contains
 
-    subroutine bulk_set_mass(p_set, mass)
-        type(Particle), dimension(:), intent(inout) :: p_set
+    subroutine bulk_set_mass(mass)
         real, intent(in) :: mass
         integer index
 
@@ -29,8 +30,7 @@ module MD_STRUCT
         end do
     end subroutine bulk_set_mass
 
-    subroutine bulk_copy_f(p_set)
-        type(Particle), dimension(:), intent(inout) :: p_set
+    subroutine bulk_copy_f()
         integer index
         do index = 1, size(p_set)
             p_set(index)%f = p_set(index)%f_next
@@ -38,13 +38,11 @@ module MD_STRUCT
         end do
     end subroutine bulk_copy_f
 
-    subroutine velo_verlet_x(p_set, dt)
+    subroutine velo_verlet_x()
         ! update coordinate
-        type(Particle), dimension(:), intent(inout) :: p_set
         type(Particle) tmp
         integer index, dimen
         real diff
-        real, intent(in) :: dt
 
         do index=1, size(p_set)
             tmp = p_set(index)
@@ -58,12 +56,10 @@ module MD_STRUCT
         end do
     end subroutine velo_verlet_x
 
-    subroutine velo_verlet_v(p_set, dt)
+    subroutine velo_verlet_v()
         ! update velocity
-        type(Particle), dimension(:), intent(inout) :: p_set
         type(Particle) tmp
         integer index, dimen
-        real, intent(in) :: dt
 
         do index = 1, size(p_set)
             tmp = p_set(index)
@@ -75,9 +71,7 @@ module MD_STRUCT
         end do
     end subroutine velo_verlet_v
 
-    subroutine iterate_pair_f(p_set, cutoff)
-        type(Particle), dimension(:), intent(inout) :: p_set
-        real, intent(in) :: cutoff
+    subroutine iterate_pair_f()
         integer i, j
         integer s, t, u
         ! reset potential energy
@@ -110,7 +104,7 @@ module MD_STRUCT
                                 cycle
                             end if
 
-                            call add_force(p_set(i), p_set(j), [s, t, u], cutoff)
+                            call add_force(p_set(i), p_set(j), [s, t, u])
                         end do
                     end do
                 end do
@@ -118,12 +112,11 @@ module MD_STRUCT
         end do
     end subroutine iterate_pair_f
 
-    subroutine add_force(pi, pj, cell_ofs, cutoff)
+    subroutine add_force(pi, pj, cell_ofs)
         ! calculate force of particle j to particle i
         type(Particle), intent(inout) :: pi
         type(Particle), intent(in) :: pj
         integer, dimension(3), intent(in) :: cell_ofs
-        real, intent(in) :: cutoff
         real, dimension(3) :: distance
         real r
         integer index
@@ -139,9 +132,8 @@ module MD_STRUCT
         end do
     end subroutine add_force
 
-    function total_energy(p_set)
+    function total_energy()
         real, dimension(3) :: total_energy
-        type(Particle), dimension(:) :: p_set
         integer i
         total_energy = 0
         do i = 1, size(p_set)
@@ -152,8 +144,7 @@ module MD_STRUCT
         total_energy(3) = 2.0 * total_energy(2) / (3.0 * size(p_set) * kb)
     end function total_energy
 
-    subroutine init_velocity_temp(p_set, temp)
-        type(Particle), dimension(:), intent(inout) :: p_set
+    subroutine init_velocity_temp(temp)
         real, intent(in) :: temp
         integer i, dimen
         real kt
@@ -166,8 +157,7 @@ module MD_STRUCT
         end do
     end subroutine init_velocity_temp
 
-    subroutine relax_quickmin(p_set)
-        type(Particle), dimension(:), intent(inout) :: p_set
+    subroutine relax_quickmin()
         type(Particle) tmp
         real, dimension(3) :: f_unit
         real dp
@@ -188,9 +178,8 @@ module MD_STRUCT
 
     end subroutine relax_quickmin
 
-    subroutine deform(p_set, erate, dstep)
+    subroutine deform(erate, dstep)
         ! apply nominal strain to z axis
-        type(Particle), dimension(:), intent(inout) :: p_set
         real, intent(in) :: erate
         integer, intent(in) :: dstep
         integer i
